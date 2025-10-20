@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitQuest - Controle de Hábitos Gamificado</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <h1>HabitQuest: Sua Jornada de Hábitos</h1>
+    </header>
+
+    <main class="container">
+        <section id="profile-card" class="card profile-status">
+            <h2>Seu Herói</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <i class="fas fa-star gold"></i>
+                    <span id="player-level" class="stat-value">Nível 1</span>
+                    <p class="stat-label">Nível Atual</p>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-coins gold"></i>
+                    <span id="player-points" class="stat-value">0</span>
+                    <p class="stat-label">Pontos de Experiência (XP)</p>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <p>Progresso para o próximo Nível:</p>
+                <div id="xp-progress-bar" class="progress-bar">
+                    <div id="xp-fill" class="progress-fill"></div>
+                </div>
+                <span id="xp-text" class="xp-info">0/100 XP</span>
+            </div>
+        </section>
+
+        <section class="card habit-form-card">
+            <h2>Criar Novo Hábito (Missão)</h2>
+            <form id="habit-form">
+                <input type="text" id="habit-name" placeholder="Nome do Hábito (ex: Ler 30min, Beber 2L de água)" required>
+                <input type="number" id="habit-reward" placeholder="Recompensa (XP, ex: 10, 25)" min="1" required>
+                <button type="submit"><i class="fas fa-plus-circle"></i> Adicionar Hábito</button>
+            </form>
+        </section>
+
+        <section class="card habit-list-card">
+            <h2>Hábitos de Hoje</h2>
+            <div id="habit-list">
+                <p id="no-habits-msg" style="text-align: center; color: #888;">Nenhum hábito cadastrado. Comece sua jornada!</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
