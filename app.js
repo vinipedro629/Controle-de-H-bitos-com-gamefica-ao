@@ -41,10 +41,11 @@ const checkLevelUp = (stats) => {
     // Enquanto os pontos ultrapassarem o requisito de XP para o próximo nível
     while (stats.points >= newXpForNextLevel) {
         // Reduz os pontos pelo custo do nível
-        stats.points -= newXpForNextLevel;
+        // IMPORTANTE: Isso garante que o XP "passado" seja consumido
+        stats.points -= newXpForNextLevel; 
         newLevel++;
 
-        // Aumenta o custo de XP para o próximo nível (Ex: 100, 200, 300...)
+        // Aumenta o custo de XP para o próximo nível (Ex: 100 * Nível)
         newXpForNextLevel = newLevel * 100;
 
         alert(`⭐ Parabéns! Você alcançou o Nível ${newLevel}!\nSeu herói está mais forte!`);
@@ -69,7 +70,7 @@ const completeHabit = (id) => {
     habit.completedToday = true;
     habit.lastCompleted = new Date().toISOString().split('T')[0];
     
-    // Adiciona XP
+    // Adiciona XP (Pontos são acumulativos para o nível)
     stats.points += habit.reward;
     stats = checkLevelUp(stats); // Checa se houve Level Up
 
@@ -82,7 +83,8 @@ const completeHabit = (id) => {
 
 const checkAndResetDaily = () => {
     let stats = getStats();
-    const today = new Date().toISOString().split('T')[0];
+    // Usa apenas a parte da data (AAAA-MM-DD) para comparação
+    const today = new Date().toISOString().split('T')[0]; 
     
     // Se a última data de conclusão for anterior a hoje, reinicia os hábitos
     if (stats.lastCompletionDate !== today) {
@@ -96,57 +98,51 @@ const checkAndResetDaily = () => {
         stats.lastCompletionDate = today; 
         saveHabits(habits);
         saveStats(stats); // Salva o novo 'lastCompletionDate'
-        renderAll();
     }
 };
 
 // --- 5. Renderização (UI) ---
 
 const renderStats = (stats) => {
-    const points = stats.points;
     const level = stats.level;
-    const xpForNextLevel = stats.xpForNextLevel;
-
-    // XP acumulado (para a barra de progresso)
-    let currentLevelXP = points; 
-    let xpNeeded = xpForNextLevel;
+    const xpNeededForNextLevel = level * 100;
     
-    // Se o jogador já passou de nível, precisamos calcular o XP dentro do nível atual
-    if (level > 1) {
-        // Calcula o XP total acumulado em todos os níveis anteriores
-        let xpTotalPastLevels = 0;
-        for (let i = 1; i < level; i++) {
-            xpTotalPastLevels += i * 100; // XP total gasto para chegar ao nível
-        }
-        currentLevelXP = points - xpTotalPastLevels; // XP restante para o nível atual
-        xpNeeded = level * 100; // XP necessário para o próximo nível
+    // Calcula o XP base total necessário para chegar ao Nível atual - 1
+    let xpTotalPastLevels = 0;
+    for (let i = 1; i < level; i++) {
+        xpTotalPastLevels += i * 100; 
     }
 
-    // Garante que o XP exibido na barra esteja correto (pode ser o XP total se for Nível 1)
-    currentLevelXP = (points < 100 && level === 1) ? points : currentLevelXP;
+    // XP que o jogador tem DENTRO do nível atual
+    const currentLevelXP = stats.points - xpTotalPastLevels; 
     
     // Preenche os elementos
     document.getElementById('player-level').textContent = `Nível ${level}`;
-    document.getElementById('player-points').textContent = points; 
+    document.getElementById('player-points').textContent = stats.points; 
 
     // Calcula a porcentagem de progresso
-    const progressPercent = Math.min(100, (currentLevelXP / xpNeeded) * 100);
+    const progressPercent = Math.min(100, (currentLevelXP / xpNeededForNextLevel) * 100);
 
     document.getElementById('xp-fill').style.width = `${progressPercent}%`;
-    document.getElementById('xp-text').textContent = `${currentLevelXP} / ${xpNeeded} XP`;
+    document.getElementById('xp-text').textContent = `${currentLevelXP} / ${xpNeededForNextLevel} XP`;
 };
 
 const renderHabits = () => {
     const habits = getHabits();
-    const list = document.getElementById('habit-list');
+    // CORREÇÃO: Usa o contêiner de itens
+    const listContainer = document.getElementById('habit-items-container');
+    const noHabitsMsg = document.getElementById('no-habits-msg');
     
-    list.innerHTML = ''; 
+    // Limpa SOMENTE o contêiner dos itens
+    listContainer.innerHTML = ''; 
 
     if (habits.length === 0) {
-        document.getElementById('no-habits-msg').style.display = 'block';
+        if (noHabitsMsg) noHabitsMsg.style.display = 'block';
         return;
     }
-    document.getElementById('no-habits-msg').style.display = 'none';
+    
+    // Se houver hábitos, esconde a mensagem
+    if (noHabitsMsg) noHabitsMsg.style.display = 'none';
 
     habits.forEach(habit => {
         const item = document.createElement('div');
@@ -166,11 +162,12 @@ const renderHabits = () => {
                 ${habit.completedToday ? 'Concluído!' : 'Concluir Missão'}
             </button>
         `;
-        list.appendChild(item);
+        // Adiciona o item ao contêiner
+        listContainer.appendChild(item);
     });
 
-    // Adiciona o Listener para os botões de conclusão (delegação de eventos)
-    list.querySelectorAll('.complete-btn').forEach(button => {
+    // Adiciona o Listener para os botões de conclusão
+    listContainer.querySelectorAll('.complete-btn').forEach(button => {
         button.addEventListener('click', (e) => {
             const id = parseInt(e.target.dataset.id);
             completeHabit(id);
@@ -186,7 +183,7 @@ const renderAll = () => {
 // --- 6. Event Listeners e Inicialização ---
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Checa e reseta hábitos se for um novo dia
+    // 1. Checa e reseta hábitos se for um novo dia (antes de renderizar)
     checkAndResetDaily(); 
     
     // 2. Inicializa o painel e a lista
@@ -212,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             habits.push(newHabit);
             saveHabits(habits);
-            renderHabits();
+            renderAll(); // Chamada para renderizar tudo
             e.target.reset(); 
         } else {
             alert('Por favor, preencha o nome do hábito e uma recompensa (XP) válida.');
